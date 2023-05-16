@@ -22,3 +22,7 @@ Route::middleware('auth:sanctum')->get('/user', function (Request $request) {
 
 
 Route::post('/testeApi', [TesteApiController::class, 'testeApi'])->name('teste.testeApi');
+
+Route::post('/testeAdapter', [TesteApiController::class, 'testeAdapter'])->name('teste.testeAdapter');
+
+Route::post('/convertJson', [TesteApiController::class, 'convertJson'])->name('teste.convertJson');
