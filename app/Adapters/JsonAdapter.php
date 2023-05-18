@@ -2,6 +2,8 @@
 
 namespace App\Adapters;
 
+use App\Helpers\JsonAdapterHelper;
+
 class JsonAdapter 
 {
     public static function transformData($json, $jsonMaps)
@@ -10,22 +12,18 @@ class JsonAdapter
         $outputJson = [];
 
         foreach($jsonMaps as $map => $control) {
-            if ($map === '/') {
-                if (isset($control['destinyArrayKey'])) {
-                    $outputJson[$control['destinyArrayKey']] = array(JsonAdapter::exchangeValue($json, $control['map']));
+            if (JsonAdapterHelper::isJsonRoot($map)) {
+                if (JsonAdapterHelper::isDestinyArray($control)) {
+                    $outputJson[$control['destinyArrayKey']] = JsonAdapter::exchangeValueReturnArray($json, $control['map']);
                 } else {
                     $outputJson[] = JsonAdapter::exchangeValue($json, $control['map']);
                 }
             } else {
-                if (isset($control['orignArrayKey'])) {
-                    $outputData = [];
-                    foreach ($json[$control['orignArrayKey']] as $item) {
-                        $outputData[] = JsonAdapter::exchangeValue($item, $control['map']);
-                    }
-                    $outputJson[$control['destinyArrayKey']] = $outputData;
+                if (JsonAdapterHelper::isOrigemArray($control)) {
+                    $outputJson[$control['destinyArrayKey']] = JsonAdapter::getJsonNestedArray($json, $control);
                 } else {
-                    if (isset($control['destinyArrayKey'])) {
-                        $outputJson[$control['destinyArrayKey']] = array(JsonAdapter::exchangeValue($json, $control['map']));
+                    if (JsonAdapterHelper::isDestinyArray($control)) {
+                        $outputJson[$control['destinyArrayKey']] = JsonAdapter::exchangeValueReturnArray($json, $control['map']);
                     } else {
                         $outputJson[$map] = JsonAdapter::exchangeValue($json, $control['map']);
                     }
@@ -34,11 +32,11 @@ class JsonAdapter
         }
 
         return $outputJson;
-    }
+    }    
 
     private static function exchangeValue($data, $keyMapping)
     {
-        $outputData = [];
+        $outputJson = [];
 
         foreach ($keyMapping as $inputKey => $outputKey) {
 
@@ -48,26 +46,31 @@ class JsonAdapter
                 $key = $outputKey;
             }
 
-            $inputValue = JsonAdapter::getValueFromKey($data, $inputKey);
+            $value = JsonAdapter::getValueFromKey($data, $inputKey);
             
             /*
-             *  Tratar Conversao de dados a partir do $inputValue
-             */            
-
-            if (isset($outputKey['dataMap'])) {
-                foreach($outputKey['dataMap'] as $datamap) {
-                    if ($datamap['tipo'] == 'replace') {
-                        foreach($datamap['dados'] as $replace) {
-                            $inputValue = str_replace($replace['search'], $replace['replace'],$inputValue);                        
-                        }                                   
-                    }
-                }
-            }
-
-            JsonAdapter::setValueFromKey($outputData, $key, $inputValue);
+             *  Tratar Conversao de dados a partir do $value retornado
+             */           
+            JsonAdapterHelper::applyDataMapping($value, $outputKey);
+            
+            JsonAdapter::setValueFromKey($outputJson, $key, $value);
 
         }
 
+        return $outputJson;
+    }
+
+    private static function exchangeValueReturnArray($data, $keyMapping)
+    {
+        return array(JsonAdapter::exchangeValue($data, $keyMapping));
+    }
+
+    private static function getJsonNestedArray($json, $control)
+    {
+        $outputData = [];
+        foreach ($json[$control['orignArrayKey']] as $item) {
+            $outputData[] = JsonAdapter::exchangeValue($item, $control['map']);
+        }
         return $outputData;
     }
 
