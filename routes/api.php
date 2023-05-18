@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\AlpargatasController;
 use App\Http\Controllers\TesteApiController;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
@@ -26,3 +27,7 @@ Route::post('/testeApi', [TesteApiController::class, 'testeApi'])->name('teste.t
 Route::post('/testeAdapter', [TesteApiController::class, 'testeAdapter'])->name('teste.testeAdapter');
 
 Route::post('/convertJson', [TesteApiController::class, 'convertJson'])->name('teste.convertJson');
+
+Route::post('/convertJsonPedido', [TesteApiController::class, 'convertJsonPedido'])->name('teste.convertJsonPedido');
+
+Route::post('/cadastrarPedido', [AlpargatasController::class, 'cadastrar'])->name('cadastrarPedido.cadastrar');
